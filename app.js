@@ -14,6 +14,11 @@ connectDB();
 const app = express();
 const FRONT_URL = process.env.FRONT_URL || 'http://localhost:5173';
 app.use(cors({ origin: FRONT_URL, credentials: true }));
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  next();
+});
 app.use(express.json());
 app.use(express.urlencoded({ extended: "true" }))
 app.use('/api/auth', authRoutes);
