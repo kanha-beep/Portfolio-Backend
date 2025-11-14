@@ -12,11 +12,7 @@ dotenv.config();
 connectDB();
 
 const app = express();
-const allowedOrigins = [
-    "http://localhost:5173", process.env.FRONT_URL,
-    "https://kanhaguptaportfolio.com",  // non-www also allowed
-    "https://kanhaguptaportfolio-frontend.vercel.app",
-];
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173'];
 // const FRONT_URL = process.env.FRONT_URL || 'http://localhost:5173';
 // app.use(cors({ origin: FRONT_URL, credentials: true }));
 app.use(
