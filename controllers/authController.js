@@ -2,6 +2,17 @@ import ExpressError from '../middleware/ExpressError.js';
 import User from '../models/userSchema.js';
 import jwt from 'jsonwebtoken';
 import { userSchemaValidate } from "../schemaValidation/userSchemaValidate.js"
+import cloudinary from "../middlewares/cloudinary.js";
+
+const uploadToCloudinary = (buffer) =>
+  new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream({ folder: "uploads" }, (error, result) => {
+      if (error) reject(error);
+      else resolve(result);
+    });
+
+    stream.end(buffer);
+  });
 
 // Generate JWT
 const generateToken = (user) => jwt.sign({ id: user?._id, roles: user?.roles, name: user?.name }, process.env.JWT_SECRET, { expiresIn: '1d' });
@@ -28,6 +39,7 @@ export const login = async (req, res, next) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        profileImage: user.profileImage || "",
     });
 };
 export const currentUser = async (req, res, next) => {
@@ -37,6 +49,37 @@ export const currentUser = async (req, res, next) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        profileImage: user.profileImage || "",
+    });
+}
+export const portfolioProfile = async (req, res) => {
+    const user = await User.findOne({}, { name: 1, email: 1, profileImage: 1 }).sort({ createdAt: 1 });
+    res.status(200).json({
+        profileImage: user?.profileImage || "",
+        name: user?.name || "",
+        email: user?.email || "",
+    });
+}
+export const updateProfileImage = async (req, res, next) => {
+    if (!req.file) return next(new ExpressError(400, "Please upload an image"));
+    const uploadedImage = await uploadToCloudinary(req.file.buffer);
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        { profileImage: uploadedImage?.secure_url || "" },
+        { new: true }
+    );
+
+    if (!user) return next(new ExpressError(401, "Unauthorized"));
+
+    res.status(200).json({
+        message: "Profile image updated successfully",
+        profileImage: user.profileImage || "",
+        user: {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            profileImage: user.profileImage || "",
+        },
     });
 }
 export const logout = async (req, res, next) => {
