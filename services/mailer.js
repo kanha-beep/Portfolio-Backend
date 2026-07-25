@@ -74,14 +74,49 @@ export const sendContactNotification = async ({
     </div>
   `;
 
-  await getTransporter().sendMail({
-    from: process.env.MAIL_FROM || MAIL_USER,
-    to: CONTACT_RECEIVER_EMAIL,
-    replyTo: email,
-    subject: `Portfolio contact: ${subjectProject}`,
-    text,
-    html,
-  });
+  const clientText = [
+    `Hi ${name},`,
+    '',
+    'Thanks for reaching out through my portfolio.',
+    `I have received your message about "${subjectProject}".`,
+    '',
+    'Here is a copy of what you sent:',
+    message,
+    '',
+    'I will get back to you soon.',
+  ].join('\n');
+
+  const clientHtml = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827;">
+      <h2 style="margin-bottom: 16px;">Thanks for reaching out</h2>
+      <p>Hi ${escapeHtml(name)},</p>
+      <p>Thanks for contacting me through my portfolio.</p>
+      <p>I have received your message about <strong>${escapeHtml(subjectProject)}</strong>.</p>
+      <p><strong>Your message:</strong></p>
+      <p style="white-space: pre-wrap;">${escapeHtml(message)}</p>
+      <p style="margin-top: 16px;">I will get back to you soon.</p>
+    </div>
+  `;
+
+  const transporter = getTransporter();
+
+  await Promise.all([
+    transporter.sendMail({
+      from: process.env.MAIL_FROM || MAIL_USER,
+      to: CONTACT_RECEIVER_EMAIL,
+      replyTo: email,
+      subject: `Portfolio contact: ${subjectProject}`,
+      text,
+      html,
+    }),
+    transporter.sendMail({
+      from: process.env.MAIL_FROM || MAIL_USER,
+      to: email,
+      subject: `We received your message: ${subjectProject}`,
+      text: clientText,
+      html: clientHtml,
+    }),
+  ]);
 };
 
 const escapeHtml = (value) =>
