@@ -4,7 +4,6 @@ import { projectsSchemaValidate } from '../schemaValidation/projectsSchemaValida
 
 export const getProjects = async (req, res, next) => {
   const projects = await Project.find({});
-  if (!projects || projects.length === 0) return next(new ExpressError(400, "No projects to display"))
   res.json(projects);
 };
 
@@ -19,7 +18,7 @@ export const singleProject = async (req, res, next) => {
   const id = req.params.id;
   // console.log("1. id: ", id)
   const project = await Project.findOne({ _id: id });
-  if (!project) return next(new ExpressError(400, error.details[0].message))
+  if (!project) return next(new ExpressError(404, "Project not found"))
   // console.log("2. project: ", project)
   res.status(201).json(project);
 };
